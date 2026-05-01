@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wumpus Logic Agent: Knowledge-Based AI Navigation System
 
-## Getting Started
+A Knowledge-Based Agent that navigates a Wumpus World grid using **Propositional Logic + Resolution Refutation** — built from scratch with no external AI/logic libraries.
 
-First, run the development server:
+**Live Demo:** https://wumpus-logic-agent.vercel.app  
+**GitHub:** https://github.com/aqeelabpro/wumpus-logic-agent
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Tech Stack
+
+- Next.js 16.2 (App Router, TypeScript)
+- Tailwind CSS v4.2 (CSS-first config)
+- React 19.2
+- Lucide React (icons)
+
+---
+
+## How CNF Conversion Works
+
+The KB encodes environment rules as biconditionals, e.g.:
+
+```
+Breeze(1,1) ⟺ (Pit(0,1) ∨ Pit(2,1) ∨ Pit(1,0) ∨ Pit(1,2))
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+CNF conversion steps:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Eliminate biconditionals (⟺):** Replace `A ⟺ B` with `(A ⇒ B) ∧ (B ⇒ A)`
+2. **Eliminate implications (⇒):** Replace `A ⇒ B` with `¬A ∨ B`
+3. **Push negations inward (De Morgan):** `¬(A ∨ B)` → `¬A ∧ ¬B`; `¬(A ∧ B)` → `¬A ∨ ¬B`
+4. **Distribute OR over AND:** `A ∨ (B ∧ C)` → `(A ∨ B) ∧ (A ∨ C)`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Result for the biconditional above:
 
-## Learn More
+```
+(¬B_1_1 ∨ P_0_1 ∨ P_2_1 ∨ P_1_0 ∨ P_1_2)   ← forward implication
+(¬P_0_1 ∨ B_1_1)                               ← backward, one per neighbor
+(¬P_2_1 ∨ B_1_1)
+...
+```
 
-To learn more about Next.js, take a look at the following resources:
+Implemented in `lib/resolution.ts → biconditionalToCNF()`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## How the Resolution Loop Works
 
-## Deploy on Vercel
+Resolution Refutation proves `α` by showing `KB ∧ ¬α` is unsatisfiable:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Negate the query literal and add it as a unit clause to a copy of the KB
+2. Repeatedly pick any two clauses that contain complementary literals (e.g. `P_1_2` and `~P_1_2`)
+3. Resolve them: remove the complementary pair, union the remaining literals
+4. If the **empty clause** `[]` is derived → contradiction → **query proved** ✓
+5. If no new clauses can be added → no contradiction → **query not provable**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Each step counter is accumulated across all `ask()` calls and displayed in the dashboard.
+
+Implemented in `lib/resolution.ts → resolutionRefutation()`.
+
+---
+
+## Agent Strategy
+
+Each turn:
+1. Get valid unvisited neighbors of current position
+2. Run `ask(r,c)` for each — proves `¬Pit_r_c` AND `¬Wumpus_r_c` via resolution
+3. If provably safe neighbors exist → pick one randomly
+4. Else → pick any unvisited neighbor (risky move)
+5. Update KB with new percepts (breeze, stench)
+
+---
+
+## Run Locally
+
+```bash
+git clone https://github.com/your-username/wumpus-logic-agent
+cd wumpus-logic-agent
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Deploy to Vercel
+
+```bash
+vercel --prod
+```
