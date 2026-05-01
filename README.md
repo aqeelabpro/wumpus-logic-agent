@@ -2,7 +2,7 @@
 
 A Knowledge-Based Agent that navigates a Wumpus World grid using **Propositional Logic + Resolution Refutation** — built from scratch with no external AI/logic libraries.
 
-**Live Demo:** https://wumpus-logic-agent.vercel.app  
+**Live Demo:** [https://wumpus-logic-agent-tree.vercel.app](https://wumpus-logic-agent-three.vercel.app/)  
 **GitHub:** https://github.com/aqeelabpro/wumpus-logic-agent
 
 ---
@@ -74,13 +74,13 @@ Each turn:
 ## Run Locally
 
 ```bash
-git clone https://github.com/your-username/wumpus-logic-agent
+git clone https://github.com/aqeelabpro/wumpus-logic-agent
 cd wumpus-logic-agent
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:6033).
 
 ---
 
